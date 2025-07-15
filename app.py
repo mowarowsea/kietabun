@@ -28,10 +28,31 @@ def login_google():
 # Google認証コールバック
 @app.route('/auth/callback')
 def google_callback():
-    # Supabaseからアクセストークンなどがクエリパラメータで返される
-    user_email = request.args.get('user_email')
-    google_id = request.args.get('provider_id')
-    name = request.args.get('user_name')
+    # Supabase Authのセッション情報（アクセストークン）を取得
+    access_token = request.args.get('access_token')
+    if not access_token:
+        flash('Google認証後のアクセストークンが取得できませんでした。')
+        return redirect(url_for('login'))
+
+    # Supabase REST APIでUsersテーブルからユーザー情報取得
+    from config import DATABASE_URL, DATABASE_API_KEY
+    headers = {
+        "apikey": DATABASE_API_KEY,
+        "Authorization": f"Bearer {access_token}"
+    }
+    users_url = f"{DATABASE_URL}/rest/v1/users"
+    response = requests.get(users_url, headers=headers)
+    if response.status_code != 200:
+        flash('ユーザー情報の取得に失敗しました。')
+        return redirect(url_for('login'))
+    users = response.json()
+    if not users:
+        flash('ユーザー情報が見つかりませんでした。')
+        return redirect(url_for('login'))
+    user_info = users[0]
+    user_email = user_info.get('email')
+    google_id = user_info.get('id')
+    name = user_info.get('user_metadata', {}).get('full_name')
     # accountsテーブルで照合
     result = supabase.table('accounts').select('*').eq('email', user_email).execute()
     if result.data:
