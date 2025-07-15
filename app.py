@@ -7,7 +7,9 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev')
 
 
-@app.route('/', methods=['GET', 'POST'])
+
+# ログインページ
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         # TODO: 通常ログイン処理
@@ -17,10 +19,10 @@ def login():
 # Google認証開始
 @app.route('/login/google')
 def login_google():
-    supabase_url = "https://nnjleijbhoaraeuroocf.supabase.co"
+    from config import DATABASE_URL
     redirect_url = url_for('google_callback', _external=True)
     # Supabase AuthのGoogle認証エンドポイント
-    auth_url = f"{supabase_url}/auth/v1/authorize?provider=google&redirect_to={redirect_url}"
+    auth_url = f"{DATABASE_URL}/auth/v1/authorize?provider=google&redirect_to={redirect_url}"
     return redirect(auth_url)
 
 # Google認証コールバック
@@ -45,7 +47,16 @@ def google_callback():
         }).execute()
         session['user'] = user_email
         flash('新規登録しました')
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))
+
+
+# トップページ（ルート）
+@app.route('/')
+def home():
+    user = session.get('user')
+    if not user:
+        return redirect(url_for('login'))
+    return render_template('home.html', user=user)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
