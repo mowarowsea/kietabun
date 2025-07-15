@@ -40,12 +40,15 @@ def google_callback():
         "apikey": DATABASE_API_KEY,
         "Authorization": f"Bearer {access_token}"
     }
-    users_url = f"{DATABASE_URL}/rest/v1/users"
+    users_url = f"{DATABASE_URL}/rest/v1/auth.users"
     response = requests.get(users_url, headers=headers)
+    print('Supabase API status:', response.status_code)
+    print('Supabase API response:', response.text)
     if response.status_code != 200:
         flash('ユーザー情報の取得に失敗しました。')
         return redirect(url_for('login'))
     users = response.json()
+    print('Supabase API parsed users:', users)
     if not users:
         flash('ユーザー情報が見つかりませんでした。')
         return redirect(url_for('login'))
