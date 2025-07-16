@@ -20,25 +20,15 @@ def login():
         return redirect(url_for('login'))
     return render_template('login.html')
 
-# Google認証開始
-@app.route('/login/google')
-def login_google():
-    from config import DATABASE_URL
-    # コールバックURLを明示的に /auth/callback に指定
-    redirect_url = f"{DATABASE_URL}/auth/callback"
-    auth_url = f"{DATABASE_URL}/auth/v1/authorize?provider=google&redirect_to={redirect_url}"
-    return redirect(auth_url)
 
-# Google認証コールバック
-@app.route('/auth/callback')
-def google_callback():
-    # Supabase Authのセッション情報（アクセストークン）を取得
-    access_token = request.args.get('access_token')
+# JSからPOSTされたaccess_tokenでサーバーセッションをセット
+from flask import jsonify
+@app.route('/api/session', methods=['POST'])
+def api_session():
+    data = request.get_json()
+    access_token = data.get('access_token')
     if not access_token:
-        flash('Google認証後のアクセストークンが取得できませんでした。')
-        return redirect(url_for('login'))
-
-    # Supabase REST APIでUsersテーブルからユーザー情報取得
+        return jsonify({'error': 'access_token required'}), 400
     from config import DATABASE_URL, DATABASE_API_KEY
     headers = {
         "apikey": DATABASE_API_KEY,
@@ -46,16 +36,11 @@ def google_callback():
     }
     users_url = f"{DATABASE_URL}/rest/v1/auth.users"
     response = requests.get(users_url, headers=headers)
-    logging.info('Supabase API status: %s', response.status_code)
-    logging.info('Supabase API response: %s', response.text)
     if response.status_code != 200:
-        flash('ユーザー情報の取得に失敗しました。')
-        return redirect(url_for('login'))
+        return jsonify({'error': 'ユーザー情報の取得に失敗しました。'}), 401
     users = response.json()
-    logging.info('Supabase API parsed users: %s', users)
     if not users:
-        flash('ユーザー情報が見つかりませんでした。')
-        return redirect(url_for('login'))
+        return jsonify({'error': 'ユーザー情報が見つかりませんでした。'}), 401
     user_info = users[0]
     user_email = user_info.get('email')
     google_id = user_info.get('id')
@@ -65,7 +50,6 @@ def google_callback():
     if result.data:
         # 既存ユーザー
         session['user'] = user_email
-        flash('ログインしました')
     else:
         # 新規登録
         supabase.table('accounts').insert({
@@ -74,8 +58,7 @@ def google_callback():
             'name': name
         }).execute()
         session['user'] = user_email
-        flash('新規登録しました')
-    return redirect(url_for('home'))
+    return jsonify({'ok': True})
 
 
 # トップページ（ルート）
