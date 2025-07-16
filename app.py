@@ -13,12 +13,17 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev')
 
 
 # ログインページ
+from config import SUPABASE_URL, SUPABASE_ANON_KEY
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         # TODO: 通常ログイン処理
         return redirect(url_for('login'))
-    return render_template('login.html')
+    return render_template('login.html', config={
+        'SUPABASE_URL': SUPABASE_URL or '',
+        'SUPABASE_ANON_KEY': SUPABASE_ANON_KEY or ''
+    })
 
 
 # JSからPOSTされたaccess_tokenでサーバーセッションをセット
