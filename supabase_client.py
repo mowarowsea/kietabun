@@ -1,4 +1,3 @@
-supabase: Client = create_client(DATABASE_URL, DATABASE_API_KEY)
 
 from supabase import create_client, Client
 from config import SUPABASE_URL, SUPABASE_API_KEY
