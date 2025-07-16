@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <script>
+      window.env = {
+        SUPABASE_URL: "{{ config['SUPABASE_URL'] }}",
+        SUPABASE_ANON_KEY: "{{ config['SUPABASE_ANON_KEY'] }}"
+      };
+    </script>
     <meta charset="UTF-8">
     <title>ログイン | 家計簿アプリ</title>
 </head>
