@@ -1,7 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+
+import logging
 import requests
 import os
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from supabase_client import supabase
+
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev')
@@ -42,13 +46,13 @@ def google_callback():
     }
     users_url = f"{DATABASE_URL}/rest/v1/auth.users"
     response = requests.get(users_url, headers=headers)
-    print('Supabase API status:', response.status_code)
-    print('Supabase API response:', response.text)
+    logging.info('Supabase API status: %s', response.status_code)
+    logging.info('Supabase API response: %s', response.text)
     if response.status_code != 200:
         flash('ユーザー情報の取得に失敗しました。')
         return redirect(url_for('login'))
     users = response.json()
-    print('Supabase API parsed users:', users)
+    logging.info('Supabase API parsed users: %s', users)
     if not users:
         flash('ユーザー情報が見つかりませんでした。')
         return redirect(url_for('login'))
