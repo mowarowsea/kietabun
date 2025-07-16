@@ -24,8 +24,8 @@ def login():
 @app.route('/login/google')
 def login_google():
     from config import DATABASE_URL
-    redirect_url = url_for('google_callback', _external=True)
-    # Supabase AuthのGoogle認証エンドポイント
+    # コールバックURLを明示的に /auth/callback に指定
+    redirect_url = f"{DATABASE_URL}/auth/callback"
     auth_url = f"{DATABASE_URL}/auth/v1/authorize?provider=google&redirect_to={redirect_url}"
     return redirect(auth_url)
 
