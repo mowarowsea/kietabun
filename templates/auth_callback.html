@@ -5,7 +5,14 @@
     <title>Google認証処理中...</title>
 </head>
 <body>
-    <p>Google認証処理中...</p>
-    <script type="module" src="/static/js/auth.js"></script>
+    {% if user %}
+        <h2>ようこそ、{{ user }} さん！</h2>
+        <p>Google認証が完了しました。</p>
+        <a href="/">ホームへ戻る</a>
+    {% else %}
+        <h2>認証エラー</h2>
+        <p>ユーザー情報が取得できませんでした。再度ログインしてください。</p>
+        <a href="/login">ログインページへ</a>
+    {% endif %}
 </body>
 </html>

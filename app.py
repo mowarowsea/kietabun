@@ -14,7 +14,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev')
 
 
 # ログインページ
-from config import SUPABASE_URL, SUPABASE_ANON_KEY
+from config import SUPABASE_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -29,7 +29,41 @@ def login():
 # /auth/callbackルート（jsでトークン処理）
 @app.route('/auth/callback')
 def auth_callback():
-    return render_template('auth_callback.html')
+    code = request.args.get('code')
+    if not code:
+        flash('認証コードが必要です。', 'error')
+        return redirect(url_for('login'))
+    
+    url = f"{SUPABASE_URL}/auth/v1/callback?grant_type=pkce"
+    data = {
+        "auth_code": code,
+        "code_verifier": session.get('code_verifier')
+    }
+    headers = {
+        "apikey": SUPABASE_API_KEY,
+        "Content-Type": "application/json"
+    }
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code != 200:
+        flash('認証に失敗しました。', 'error')
+        return redirect(url_for('login'))
+    
+    user_info = response.json().get('user', {})
+
+
+    # accountsテーブルで照合
+    result = supabase.table('accounts').select('*').eq('email', user_info.get("email")).execute()
+    if result.data == False:
+        # 新規登録
+        supabase.table('accounts').insert({
+            'email': user_info.get('email'),
+            'google_id': user_info.get('id'),
+            'name': user_info.get('user_metadata', {}).get('full_name')
+        }).execute()
+
+    session['access_token'] = response.json().get('access_token')
+    session['user'] = response.json().get('user')
+    return render_template('auth_callback.html', user=session['user'], access_token=session['access_token'])
 
 # JSからPOSTされたaccess_tokenでサーバーセッションをセット
 from flask import jsonify
