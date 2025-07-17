@@ -1,4 +1,5 @@
 
+
 import logging
 import requests
 import os
@@ -25,6 +26,10 @@ def login():
         'SUPABASE_ANON_KEY': SUPABASE_ANON_KEY or ''
     })
 
+# /auth/callbackルート（jsでトークン処理）
+@app.route('/auth/callback')
+def auth_callback():
+    return render_template('auth_callback.html')
 
 # JSからPOSTされたaccess_tokenでサーバーセッションをセット
 from flask import jsonify
@@ -34,12 +39,12 @@ def api_session():
     access_token = data.get('access_token')
     if not access_token:
         return jsonify({'error': 'access_token required'}), 400
-    from config import DATABASE_URL, DATABASE_API_KEY
+    from config import SUPABASE_URL, SUPABASE_API_KEY
     headers = {
-        "apikey": DATABASE_API_KEY,
+        "apikey": SUPABASE_API_KEY,
         "Authorization": f"Bearer {access_token}"
     }
-    users_url = f"{DATABASE_URL}/rest/v1/auth.users"
+    users_url = f"{SUPABASE_URL}/rest/v1/auth.users"
     response = requests.get(users_url, headers=headers)
     if response.status_code != 200:
         return jsonify({'error': 'ユーザー情報の取得に失敗しました。'}), 401
