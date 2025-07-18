@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head><title>SPA化デモ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<style>
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <div id="login-view">
+    <button id="btn-login">Googleでログイン</button>
+  </div>
+  <div id="app-view" class="hidden">
+    <p id="welcome"></p>
+    <button id="btn-logout">ログアウト</button>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "{{ supabase_url }}";
+    const SUPABASE_KEY = "{{ supabase_anon_key }}";
+    const supabase = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    const loginView = document.getElementById("login-view");
+    const appView = document.getElementById("app-view");
+    const welcome = document.getElementById("welcome");
+
+    document.getElementById("btn-login").onclick = async () => {
+      await supabase.auth.signInWithOAuth({ provider: 'google' });
+    };
+    document.getElementById("btn-logout").onclick = async () => {
+      await supabase.auth.signOut();
+    };
+
+    supabase.auth.onAuthStateChange((_, session) => {
+      if (session?.user) {
+        loginView.classList.add("hidden");
+        appView.classList.remove("hidden");
+        welcome.textContent = `こんにちは、${session.user.user_metadata.name || session.user.email}`;
+      } else {
+        loginView.classList.remove("hidden");
+        appView.classList.add("hidden");
+      }
+    });
+
+    // 初期状態チェック
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.onAuthStateChange((_, s) => {});
+    });
+  </script>
+</body>
+</html>
