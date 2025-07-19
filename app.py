@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, redirect, request, jsonify, render_template, session, url_for
 from dotenv import load_dotenv
+import supabase
 load_dotenv()
 import os
 import requests
@@ -10,7 +11,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev')
 
 
 # ログインページ
-from config import SUPABASE_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY
+from os import SUPABASE_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
