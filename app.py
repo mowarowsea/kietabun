@@ -1,4 +1,4 @@
-from flask import Flask, redirect, request, jsonify, render_template, session, url_for
+from flask import Flask, flash, redirect, request, jsonify, render_template, session, url_for
 from dotenv import load_dotenv
 import supabase
 load_dotenv()
